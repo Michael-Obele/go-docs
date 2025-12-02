@@ -79,12 +79,37 @@ Connect to the running MCP server using various clients:
 
 Add to your `.vscode/settings.json` or Cursor settings:
 
+**For Development (localhost):**
+```json
+{
+  "mcpServers": {
+    "go-docs-dev": {
+      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+      "type": "sse"
+    }
+  }
+}
+```
+
+**For Production (SSE transport):**
 ```json
 {
   "mcpServers": {
     "go-docs": {
-      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+      "url": "https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/sse",
       "type": "sse"
+    }
+  }
+}
+```
+
+**For Production (HTTP transport):**
+```json
+{
+  "mcpServers": {
+    "go-docs": {
+      "url": "https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/mcp",
+      "type": "http"
     }
   }
 }
@@ -94,11 +119,34 @@ Add to your `.vscode/settings.json` or Cursor settings:
 
 Add to your `claude_desktop_config.json`:
 
+**For Development (localhost):**
+```json
+{
+  "mcpServers": {
+    "go-docs-dev": {
+      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse"
+    }
+  }
+}
+```
+
+**For Production (SSE transport):**
 ```json
 {
   "mcpServers": {
     "go-docs": {
-      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse"
+      "url": "https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/sse"
+    }
+  }
+}
+```
+
+**For Production (HTTP transport):**
+```json
+{
+  "mcpServers": {
+    "go-docs": {
+      "url": "https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/mcp"
     }
   }
 }
@@ -109,10 +157,13 @@ Add to your `claude_desktop_config.json`:
 ```typescript
 import { MCPClient } from "@mastra/mcp";
 
+// Use environment variable for URL (supports both dev and prod)
+const mcpUrl = process.env.MCP_SERVER_URL || "http://localhost:4111/api/mcp/goDocsMcpServer/sse";
+
 const mcp = new MCPClient({
   servers: {
     goDocs: {
-      url: "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+      url: mcpUrl,
     },
   },
 });
@@ -128,17 +179,47 @@ const result = await mcp.callTool("go-docs", "fetchGoDocs", {
 
 ### MCP Server
 
-The project includes an MCP server for integration with external tools. When running, it exposes an HTTP SSE endpoint at `http://localhost:4111/api/mcp/goDocsMcpServer/sse`.
+The project includes an MCP server for integration with external tools. 
+
+- **Development**: Exposes an HTTP SSE endpoint at `http://localhost:4111/api/mcp/goDocsMcpServer/sse`
+- **Production**: Available at both:
+  - SSE transport: `https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/sse`
+  - HTTP transport: `https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/mcp`
 
 ### Testing Configuration
 
 For testing purposes, you can configure your MCP client as follows:
 
+**Development Testing:**
 ```json
 {
   "mcpServers": {
-    "testing": {
+    "go-docs-test-dev": {
       "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+      "type": "sse"
+    }
+  }
+}
+```
+
+**Production Testing (SSE transport):**
+```json
+{
+  "mcpServers": {
+    "go-docs-test-prod-sse": {
+      "url": "https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/sse",
+      "type": "sse"
+    }
+  }
+}
+```
+
+**Production Testing (HTTP transport):**
+```json
+{
+  "mcpServers": {
+    "go-docs-test-prod-http": {
+      "url": "https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/mcp",
       "type": "http"
     }
   }
@@ -161,7 +242,7 @@ The primary interface is through the MCP server, which exposes Go documentation 
 
 The Go docs MCP server provides intelligent Go programming assistance:
 
-1. **MCP Protocol**: Communicates via HTTP SSE transport at `/api/mcp/goDocsMcpServer/sse`
+1. **MCP Protocol**: Communicates via HTTP SSE transport at `/api/mcp/goDocsMcpServer/sse` or HTTP transport at `/api/mcp/goDocsMcpServer/mcp`
 2. **Documentation Fetching**: The `go-docs-tool` fetches relevant documentation from pkg.go.dev
 3. **Tool Exposure**: Makes Go documentation tools available to connected MCP clients
 4. **Code Examples**: Provides practical Go code examples and best practices
@@ -199,6 +280,7 @@ Common environment variables you may need:
 
 - `OPENAI_API_KEY` — API key for OpenAI
 - (or) `GOOGLE_GENERATIVE_AI_API_KEY` — for Google Gemini, etc.
+- `MCP_SERVER_URL` — MCP server URL (defaults to `http://localhost:4111/api/mcp/goDocsMcpServer/sse` for development, use `https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/sse` for SSE or `https://go-docs.mastra.cloud/api/mcp/goDocsMcpServer/mcp` for HTTP transport in production)
 
 ---
 
