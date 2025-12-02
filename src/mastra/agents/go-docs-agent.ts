@@ -40,7 +40,7 @@ export const goDocsAgent = new Agent({
     
     Always provide accurate information. If you're unsure, fetch the documentation first.
   `,
-  model: "openai/gpt-4o-mini",
+  model: "openai/gpt-5-nano",
   tools: { fetchGoDoc },
   memory: new Memory({
     storage: new LibSQLStore({
