@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"testing": {
+			"url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
