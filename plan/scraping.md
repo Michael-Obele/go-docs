@@ -133,8 +133,12 @@ async function scrapeGoDoc(pkg: string, section: string): Promise<GoDocResult> {
     note: "Live data from pkg.go.dev",
   };
 
-  // Add section-specific data
-  if (section === "functions") {
+  // Handle section-specific data
+  // "auto" mode returns comprehensive overview with key functions/types
+  if (section === "auto" || section === "overview") {
+    result.functions = extractFunctions($).slice(0, 10); // Key functions
+    result.types = extractTypes($).slice(0, 10); // Key types
+  } else if (section === "functions") {
     result.functions = extractFunctions($);
   } else if (section === "types") {
     result.types = extractTypes($);

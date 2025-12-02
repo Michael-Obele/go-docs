@@ -140,14 +140,14 @@ Response: Returns Effective Go tips including error handling best practices
 
 ### Available Sections
 
-| Section        | Description                                           |
-| -------------- | ----------------------------------------------------- |
-| `auto`         | **Recommended** - Comprehensive overview (default)    |
-| `overview`     | Package synopsis and description only                 |
-| `functions`    | Detailed list of exported functions with signatures   |
-| `types`        | Detailed list of exported types with definitions      |
-| `examples`     | Code examples from documentation                      |
-| `effective-go` | Effective Go best practices (not package-specific)    |
+| Section        | Description                                         |
+| -------------- | --------------------------------------------------- |
+| `auto`         | **Recommended** - Comprehensive overview (default)  |
+| `overview`     | Package synopsis and description only               |
+| `functions`    | Detailed list of exported functions with signatures |
+| `types`        | Detailed list of exported types with definitions    |
+| `examples`     | Code examples from documentation                    |
+| `effective-go` | Effective Go best practices (not package-specific)  |
 
 > **Note**: The `auto` section is the default and recommended for most queries. It provides comprehensive documentation that covers synopsis, key functions, types, and examples - eliminating the need to guess which section contains the information you need.
 

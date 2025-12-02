@@ -282,17 +282,30 @@ curl -X POST http://localhost:3000/mcp \
 ### Unit Testing
 
 ```typescript
+import { RuntimeContext } from "@mastra/core/runtime-context";
 import { fetchGoDoc } from "./goDocs";
 
 describe("fetchGoDoc", () => {
-  it("fetches fmt package", async () => {
+  it("fetches fmt package with auto section", async () => {
+    const runtimeContext = new RuntimeContext();
     const result = await fetchGoDoc.execute({
-      context: { pkg: "fmt", section: "overview" },
-      runtimeContext: new RuntimeContext(),
+      context: { pkg: "fmt", section: "auto" },
+      runtimeContext,
     });
 
     expect(result.title).toContain("fmt");
     expect(result.exported).toContain("Println");
+    expect(result.functions).toBeDefined(); // auto includes functions
+  });
+
+  it("fetches effective-go tips", async () => {
+    const runtimeContext = new RuntimeContext();
+    const result = await fetchGoDoc.execute({
+      context: { pkg: "", section: "effective-go" },
+      runtimeContext,
+    });
+
+    expect(result.markdown).toContain("Error Handling");
   });
 });
 ```

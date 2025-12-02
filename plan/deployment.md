@@ -25,17 +25,28 @@ This guide covers deploying the Go Documentation MCP Server to Mastra Cloud, mak
   "scripts": {
     "dev": "mastra dev",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "test": "bun test",
+    "prepare": "husky",
+    "release": "semantic-release",
+    "release:dry": "semantic-release --dry-run"
   },
   "dependencies": {
-    "@mastra/core": "^0.24.6",
+    "@mastra/core": "latest",
     "@mastra/mcp": "latest",
     "axios": "^1.7.0",
     "cheerio": "^1.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^10.0.0",
     "@types/node": "^22.0.0",
+    "husky": "^9.0.0",
+    "semantic-release": "^24.0.0",
     "typescript": "^5.6.0"
   },
   "engines": {
@@ -302,13 +313,20 @@ Mastra Cloud can auto-deploy on push:
 ```bash
 # Make changes
 git add .
-git commit -m "Update feature X"
+git commit -m "feat: add new feature X"  # Use conventional commits!
 git push
 
+# GitHub Actions will automatically:
+# - Run tests
+# - Create a new release (if feat/fix commit)
+# - Update CHANGELOG.md
+
 # Go to Mastra Cloud dashboard
-# Click "Deploy" to trigger manual deployment
+# Auto-deploy will trigger, or click "Deploy" manually
 ```
+
+> **Note**: See [CI/CD Guide](./ci-cd.md) for details on semantic versioning and automated releases.
 
 ---
 
-[← Back to Index](./index.md) | [Next: Usage →](./usage.md)
+[← Back to Index](./index.md) | [Next: CI/CD →](./ci-cd.md) | [Usage →](./usage.md)

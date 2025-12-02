@@ -4,19 +4,56 @@
 
 ## Overview
 
-This guide covers setting up automated releases using semantic-release with GitHub Actions. The setup enables:
+This guide covers setting up automated releases using semantic-release with GitHub Actions, while CI/CD is handled by Mastra Cloud. The setup enables:
 
 - Automatic version bumping based on commit messages
-- Automated changelog generation
-- GitHub releases creation
+- Automated changelog generation with **all changes visible**
+- GitHub releases creation with detailed release notes
 - Conventional commits enforcement
+- Mastra Cloud for testing and deployment
+
+## Workflow Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    Mastra Cloud + GitHub Actions              │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  Mastra Cloud (CI/CD)           release.yml (on main push)   │
+│  ┌─────────────────────┐        ┌─────────────────────────┐  │
+│  │ • Agent Testing     │        │ • Build                 │  │
+│  │ • Auto Deployment   │        │ • Semantic Release      │  │
+│  │ • Logs & Traces     │        │   - Analyze commits     │  │
+│  │ • Custom Domains    │        │   - Generate changelog  │  │
+│  └─────────────────────┘        │   - Create GitHub release│ │
+│                                  │   - Update CHANGELOG.md │  │
+│                                  └─────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Mastra Cloud CI/CD
+
+### Why Mastra Cloud?
+
+- **Integrated Testing**: Agent testing interface for comprehensive validation
+- **Auto Deployment**: Automatic deployments on git push to connected repository
+- **Monitoring**: Comprehensive logs and traces for debugging
+- **Scalability**: Built-in scaling without infrastructure concerns
+- **Custom Domains**: Support for custom domains per project
+
+### Setup Steps
+
+1. Connect your GitHub repository to Mastra Cloud
+2. Configure project settings in the Mastra Cloud dashboard
+3. Push code to trigger automatic deployments
+4. Use the Agent testing interface for validation
 
 ## Semantic Release
 
 ### Why Semantic Release?
 
 - **Automated versioning**: No manual version bumps
-- **Changelog generation**: Auto-generated from commits
+- **Complete changelog**: Shows ALL changes (features, fixes, docs, tests, etc.)
 - **Consistent releases**: Every merge to main triggers a release
 - **Conventional commits**: Enforced commit message format
 
@@ -39,6 +76,8 @@ export default {
           { type: "perf", release: "patch" },
           { type: "docs", release: "patch" },
           { type: "refactor", release: "patch" },
+          { type: "style", release: "patch" },
+          { type: "build", release: "patch" },
           { breaking: true, release: "major" },
         ],
       },
@@ -49,31 +88,67 @@ export default {
         preset: "conventionalcommits",
         presetConfig: {
           types: [
+            // ALL types visible in changelog for complete transparency
             { type: "feat", section: "🚀 Features", hidden: false },
             { type: "fix", section: "🐛 Bug Fixes", hidden: false },
-            { type: "perf", section: "⚡ Performance", hidden: false },
+            {
+              type: "perf",
+              section: "⚡ Performance Improvements",
+              hidden: false,
+            },
             { type: "docs", section: "📚 Documentation", hidden: false },
-            { type: "refactor", section: "♻️ Refactoring", hidden: false },
-            { type: "test", section: "🧪 Tests", hidden: true },
-            { type: "chore", section: "🔧 Maintenance", hidden: true },
-            { type: "ci", section: "👷 CI/CD", hidden: true },
+            { type: "refactor", section: "♻️ Code Refactoring", hidden: false },
+            { type: "style", section: "💄 Styling", hidden: false },
+            { type: "test", section: "🧪 Tests", hidden: false },
+            { type: "build", section: "📦 Build System", hidden: false },
+            { type: "ci", section: "👷 CI/CD", hidden: false },
+            { type: "chore", section: "🔧 Maintenance", hidden: false },
+            { type: "revert", section: "⏪ Reverts", hidden: false },
           ],
+        },
+        writerOpts: {
+          groupBy: "type",
+          commitGroupsSort: ["feat", "fix", "perf", "refactor", "docs"],
+          commitsSort: ["scope", "subject"],
         },
       },
     ],
-    "@semantic-release/changelog",
+    [
+      "@semantic-release/changelog",
+      {
+        changelogFile: "CHANGELOG.md",
+        changelogTitle:
+          "# Changelog\\n\\nAll notable changes to Go Docs MCP Server will be documented in this file.\\n",
+      },
+    ],
     [
       "@semantic-release/git",
       {
         assets: ["CHANGELOG.md", "package.json"],
         message:
-          "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
+          "chore(release): ${nextRelease.version} [skip ci]\\n\\n${nextRelease.notes}",
       },
     ],
-    "@semantic-release/github",
+    [
+      "@semantic-release/github",
+      {
+        successComment:
+          "🎉 This ${issue.pull_request ? 'PR is included' : 'issue has been resolved'} in version ${nextRelease.version}",
+        releasedLabels: ["released"],
+      },
+    ],
   ],
 };
 ```
+
+      },
+    ],
+    "@semantic-release/github",
+
+],
+};
+
+````
 
 ### Dependencies
 
@@ -91,7 +166,7 @@ Add these to `devDependencies` in `package.json`:
     "conventional-changelog-conventionalcommits": "^8.0.0"
   }
 }
-```
+````
 
 ## Commitlint
 
@@ -149,9 +224,11 @@ bunx husky init
 echo 'bunx --no -- commitlint --edit "$1"' > .husky/commit-msg
 ```
 
-## GitHub Actions Workflow
+## GitHub Actions Workflows
 
-Create `.github/workflows/release.yml`:
+### Release Workflow (Changelog & Releases)
+
+Create `.github/workflows/release.yml` for automated releases:
 
 ```yaml
 name: Release
@@ -188,14 +265,13 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Run tests
-        run: bun test
-
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bunx semantic-release
 ```
+
+> **Note**: CI/CD (testing, linting, building) is handled by Mastra Cloud. The Release workflow focuses solely on creating releases with comprehensive changelogs.
 
 ## Testing with Act
 
@@ -305,18 +381,18 @@ Reviewed-by: @username
 
 ### Commit Types
 
-| Type       | Description                 | Release |
-| ---------- | --------------------------- | ------- |
-| `feat`     | New feature                 | minor   |
-| `fix`      | Bug fix                     | patch   |
-| `docs`     | Documentation only          | patch   |
-| `style`    | Formatting, no code change  | -       |
-| `refactor` | Code refactoring            | patch   |
-| `perf`     | Performance improvement     | patch   |
-| `test`     | Adding tests                | -       |
-| `chore`    | Maintenance                 | -       |
-| `ci`       | CI/CD changes               | -       |
-| `revert`   | Revert previous commit      | varies  |
+| Type       | Description                | Release |
+| ---------- | -------------------------- | ------- |
+| `feat`     | New feature                | minor   |
+| `fix`      | Bug fix                    | patch   |
+| `docs`     | Documentation only         | patch   |
+| `style`    | Formatting, no code change | -       |
+| `refactor` | Code refactoring           | patch   |
+| `perf`     | Performance improvement    | patch   |
+| `test`     | Adding tests               | -       |
+| `chore`    | Maintenance                | -       |
+| `ci`       | CI/CD changes              | -       |
+| `revert`   | Revert previous commit     | varies  |
 
 ## Package.json Scripts
 
@@ -407,17 +483,17 @@ Add these scripts to `package.json`:
 │                    Developer Workflow                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  1. Create branch         4. Merge to main                       │
-│     git checkout -b           git merge feature-branch           │
+│  1. Create branch         4. Push to main                        │
+│     git checkout -b           git push origin main               │
 │     feature/my-feature                                           │
-│                           5. GitHub Actions triggers             │
-│  2. Make changes             - Build                             │
-│     git add .                - Test                              │
-│                              - Semantic Release                  │
+│                           5. Mastra Cloud triggers               │
+│  2. Make changes             - Testing                           │
+│     git add .                - Auto-deployment                   │
+│                              - Monitoring                        │
 │  3. Commit (conventional)                                        │
-│     git commit -m         6. Auto-generated                      │
-│     "feat: add feature"      - Version bump                      │
-│                              - Changelog update                  │
+│     git commit -m         6. GitHub Actions triggers             │
+│     "feat: add feature"      - Semantic Release                  │
+│                              - Changelog generation              │
 │                              - GitHub release                    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
