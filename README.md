@@ -2,7 +2,16 @@
 
 ![version](https://img.shields.io/github/v/tag/Michael-Obele/go-docs?label=version)
 
-A Mastra-based agent project that powers an expert Go programming assistant. This project demonstrates how to build a Mastra agent that fetches Go documentation from pkg.go.dev and returns concise, well-formatted answers with examples.
+A Mastra-based MCP server that provides expert Go programming assistance. This project demonstrates how to build an MCP server that fetches Go documentation from pkg.go.dev and delivers concise, well-formatted answers with examples through the Model Context Protocol.
+
+## 🚀 Features
+
+- **Go Documentation Access**: Fetches real-time documentation from pkg.go.dev
+- **MCP Protocol Support**: HTTP SSE transport for seamless integration with MCP clients
+- **Intelligent Responses**: Provides well-formatted answers with code examples
+- **Mastra Framework**: Built on Mastra for scalable tool development
+- **TypeScript Support**: Fully typed with TypeScript
+- **Multi-Client Support**: Works with Cursor, VSCode, Claude Desktop, and other MCP-compatible tools
 
 ---
 
@@ -49,18 +58,115 @@ bun run start
 - Studio (Mastra local UI) is available during dev, usually at http://localhost:4111.
 - The project uses Mastra's `mastra dev`, `mastra build`, and `mastra start` scripts configured in `package.json`.
 
+## 📖 Usage
+
+Once the MCP server is running, connect your MCP-compatible client (Cursor, VSCode, Claude Desktop, etc.) using the configuration below. The server exposes Go documentation tools that can be used to ask questions about Go programming.
+
+### Example Queries
+
+Once connected, you can ask questions like:
+
+- "How do I use the fmt package in Go?"
+- "Show me examples of Go slices and arrays"
+- "What are Go best practices for error handling?"
+- "Explain Go interfaces with code examples"
+
+### MCP Client Configuration
+
+Connect to the running MCP server using various clients:
+
+#### Cursor/VSCode Configuration
+
+Add to your `.vscode/settings.json` or Cursor settings:
+
+```json
+{
+  "mcpServers": {
+    "go-docs": {
+      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+      "type": "sse"
+    }
+  }
+}
+```
+
+#### Claude Desktop Configuration
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "go-docs": {
+      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse"
+    }
+  }
+}
+```
+
+#### Programmatic Usage
+
+```typescript
+import { MCPClient } from "@mastra/mcp";
+
+const mcp = new MCPClient({
+  servers: {
+    goDocs: {
+      url: "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+    },
+  },
+});
+
+// Get available tools
+const tools = await mcp.getTools();
+
+// Call a tool directly
+const result = await mcp.callTool("go-docs", "fetchGoDocs", {
+  query: "How do I use Go slices?",
+});
+```
+
+### MCP Server
+
+The project includes an MCP server for integration with external tools. When running, it exposes an HTTP SSE endpoint at `http://localhost:4111/api/mcp/goDocsMcpServer/sse`.
+
+### Testing Configuration
+
+For testing purposes, you can configure your MCP client as follows:
+
+```json
+{
+  "mcpServers": {
+    "testing": {
+      "url": "http://localhost:4111/api/mcp/goDocsMcpServer/sse",
+      "type": "http"
+    }
+  }
+}
+```
+
 ---
 
 ## 🧭 Project Overview
 
-This repository contains a Mastra agent that provides Go documentation via the `fetch_go_doc` tool.
+This repository provides a Mastra-based MCP server that delivers Go programming documentation and assistance through the Model Context Protocol.
 
 - Entry point: `src/mastra/index.ts`
-- Agent: `src/mastra/agents/go-docs-agent.ts`
 - Tool that fetches pkg.go.dev: `src/mastra/tools/go-docs-tool.ts`
-- mcp server definition: `src/mastra/mcp/go-docs-server.ts`
+- MCP server definition: `src/mastra/mcp/go-docs-server.ts`
 
-If you want to modify the agent's behavior, edit the `instructions` and `tools` passed to the `Agent` in `src/mastra/agents/go-docs-agent.ts`.
+The primary interface is through the MCP server, which exposes Go documentation tools to MCP-compatible clients like Cursor, VSCode, and Claude Desktop.
+
+## 🔧 How it Works
+
+The Go docs MCP server provides intelligent Go programming assistance:
+
+1. **MCP Protocol**: Communicates via HTTP SSE transport at `/api/mcp/goDocsMcpServer/sse`
+2. **Documentation Fetching**: The `go-docs-tool` fetches relevant documentation from pkg.go.dev
+3. **Tool Exposure**: Makes Go documentation tools available to connected MCP clients
+4. **Code Examples**: Provides practical Go code examples and best practices
+
+The MCP server uses the official Go documentation API to ensure accuracy and up-to-date information.
 
 ---
 
@@ -111,47 +217,54 @@ src/
 
 ---
 
-## 🔖 Version and Tags
+## 🛠️ Development
 
-This README includes a version/badge that shows the latest Git tag—this requires creating and pushing a Git tag in the repository. If you want to set or update the version, either edit `package.json` or create a Git tag:
+### Extending the MCP Server
 
-To add a version in `package.json` (recommended):
+To add new capabilities to the Go documentation MCP server:
 
-```bash
-# using npm
-npm pkg set version 0.1.0
+1. **Add Tools**: Create new tools in `src/mastra/tools/` for additional Go documentation features
+2. **Modify MCP Server**: Update `src/mastra/mcp/go-docs-server.ts` to expose new tools
+3. **Test with MCP Clients**: Use the testing configuration to verify tool functionality
+
+### Building Custom Tools
+
+Tools are created using Mastra's `createTool` function:
+
+```typescript
+import { createTool } from "@mastra/core/tools";
+import { z } from "zod";
+
+export const customTool = createTool({
+  id: "custom-tool",
+  description: "Description of what the tool does",
+  inputSchema: z.object({
+    param: z.string(),
+  }),
+  execute: async ({ context }) => {
+    // Tool logic here
+    return { result: "output" };
+  },
+});
 ```
 
-To create and push a Git tag (recommended for releases):
+### MCP Server Configuration
 
-```bash
-git tag v0.1.0
-git push origin v0.1.0
+The MCP server is configured in `src/mastra/index.ts`. To add new tools to the MCP server:
+
+```typescript
+import { MCPServer } from "@mastra/mcp";
+
+const server = new MCPServer({
+  name: "Go Docs Server",
+  version: "1.0.0",
+  tools: { customTool }, // Add your custom tools here
+});
 ```
 
-To get the version locally from `package.json`:
+### MCP Integration
 
-```bash
-node -e "console.log(require('./package.json').version || 'No version set')"
-# or
-node -p "require('./package.json').version"
-```
-
-If you want to show a dynamic version badge on GitHub, use this markdown badge at the top of README (already included):
-
-```md
-![version](https://img.shields.io/github/v/tag/Michael-Obele/go-docs?label=version)
-```
-
-Note: Shields.io reads GitHub tags and releases. If there are no tags or releases in your repository, the badge will show ‘unknown’. Setting `package.json` version or tagging a release keeps users informed of the current version.
-
----
-
-## 🧑‍💻 Development Notes
-
-- The project uses `@mastra/core` and related packages; see Mastra docs for advanced configuration: https://mastra.ai/docs
-- If you add or modify tools or agents, ensure they are registered in `src/mastra/index.ts`.
-- Plugins such as `@mastra/libsql` are used for storage. Adjust `index.ts` storage URL to persist data on disk (for example `file:../mastra.db`).
+The MCP server allows external tools to access Go documentation capabilities. Configure it in your IDE or use the provided client examples.
 
 ---
 
@@ -173,26 +286,8 @@ This repository is currently configured as `private: true` in `package.json`. If
 
 ## References
 
-- Mastra docs: https://mastra.ai/docs
-- Bun docs: https://bun.sh/docs
-- pkg.go.dev: https://pkg.go.dev
-
----
-
-If you'd like, I can also add a `version` field to `package.json` and a GitHub Actions workflow to automatically bump the tag on releases — tell me which workflow (semantic-release, standard-version, or manual tagging) you'd prefer and I’ll add it.
-
-# go-docs
-
-To install dependencies:
-
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.2. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+- [Mastra Documentation](https://mastra.ai/docs)
+- [Go Official Documentation](https://go.dev/doc/)
+- [pkg.go.dev](https://pkg.go.dev)
+- [Go Best Practices](https://google.github.io/styleguide/go/best-practices.html)
+- [Bun Runtime](https://bun.sh/docs)
