@@ -1,11 +1,36 @@
 {
   "name": "go-docs",
+  "version": "1.0.0",
+  "description": "A Mastra-based MCP server that provides expert Go programming assistance with real-time documentation from pkg.go.dev",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "author": "Michael Obele",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Michael-Obele/go-docs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Michael-Obele/go-docs/issues"
+  },
+  "homepage": "https://github.com/Michael-Obele/go-docs#readme",
+  "keywords": [
+    "go",
+    "golang",
+    "documentation",
+    "mcp",
+    "model-context-protocol",
+    "mastra",
+    "ai",
+    "assistant"
+  ],
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/bun": "latest",
-    "mastra": "^0.18.6"
+    "mastra": "^0.18.6",
+    "semantic-release": "^24.2.0"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"
@@ -16,7 +41,9 @@
   "scripts": {
     "dev": "mastra dev",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "check-versions": "node scripts/check-versions.js",
+    "sync-versions": "node scripts/sync-versions.js"
   },
   "dependencies": {
     "@mastra/core": "^0.24.6",
