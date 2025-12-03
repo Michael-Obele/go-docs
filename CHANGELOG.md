@@ -1,3 +1,15 @@
+# 1.0.0 (2025-12-03)
+
+
+### Features
+
+* add initial MCP server configuration in mcp.json ([3850edb](https://github.com/Michael-Obele/go-docs/commit/3850edb6278bd34b317d4d10e81245b136790784))
+* add version synchronization scripts and update package.json ([e05cf22](https://github.com/Michael-Obele/go-docs/commit/e05cf224ffc84e9461ea240f2d990c27427d4b12))
+* enhance README with detailed MCP server configuration for development and production ([c879a66](https://github.com/Michael-Obele/go-docs/commit/c879a66fdeb60be7a4c44ac44d1bec66230a5884))
+* Implement Go Documentation MCP Server and Agent ([6a402fe](https://github.com/Michael-Obele/go-docs/commit/6a402fee0b629c816cad24e3e13b2e48f0c0f28a))
+* initial project setup with semantic-release ([b4745e1](https://github.com/Michael-Obele/go-docs/commit/b4745e121b0e01086a301940270591c8de363b3e))
+* update model to OpenAI GPT-5-nano for improved performance ([8c52705](https://github.com/Michael-Obele/go-docs/commit/8c52705786e3baa4c41111c0a2fce76b88b43566))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
