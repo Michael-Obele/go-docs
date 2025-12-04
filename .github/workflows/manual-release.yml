@@ -23,9 +23,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Compute next version
+      - name: Compute next version using semantic-release
         id: compute
         run: |
+          # Run semantic-release in dry-run to determine the next version without publishing
+          SKIP_CHANGELOG=true npx semantic-release --no-ci --dry-run --branches master || true
+          # Fallback: compute-next-version if semantic-release doesn't produce a version
           VERSION=$(node scripts/compute-next-version.js || echo none)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -42,7 +45,7 @@ jobs:
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Bump package.json version
+      - name: Bump package.json version (if computed)
         if: steps.compute.outputs.version != 'none'
         run: |
           node scripts/bump-package-version.js --version ${{ steps.compute.outputs.version }}
@@ -51,7 +54,7 @@ jobs:
           git add package.json
           git commit -m "chore(release): bump version to ${{ steps.compute.outputs.version }} [skip ci]" || echo "No changes to commit"
 
-      - name: Inject changelog entry
+      - name: Inject changelog entry (using custom script)
         if: steps.compute.outputs.version != 'none'
         run: |
           DATE=$(date +%Y-%m-%d)

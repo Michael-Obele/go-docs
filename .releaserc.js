@@ -1,7 +1,5 @@
 // .releaserc.js
-export default {
-  branches: ["main"],
-  plugins: [
+const plugins = [
     [
       "@semantic-release/commit-analyzer",
       {
@@ -72,5 +70,13 @@ export default {
         releasedLabels: ["released"],
       },
     ],
-  ],
+];
+
+// Allow skipping changelog plugin when SKIP_CHANGELOG is set in the environment
+const skipChangelog = process.env.SKIP_CHANGELOG === 'true' || process.env.SKIP_CHANGELOG === '1';
+const effectivePlugins = skipChangelog ? plugins.filter(p => !(Array.isArray(p) && p[0] === '@semantic-release/changelog')) : plugins;
+
+export default {
+  branches: ["main"],
+  plugins: effectivePlugins,
 };
