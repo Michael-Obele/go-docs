@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, existsSync, writeFileSync } from "fs";
 import { resolve, basename } from "path";
+import { execSync } from "child_process";
 
 function parseArgs(argv) {
   const args = {};
@@ -12,6 +13,9 @@ function parseArgs(argv) {
     else if (a === "--file" || a === "-f") args.file = argv[++i];
     else if (a === "--write" || a === "--commit") args.write = true;
     else if (a === "--dry") args.dry = true;
+      else if (a === "--commit") args.commit = true;
+      else if (a === "--push") args.push = true;
+      else if (a === "--tag") args.tag = true;
   }
   return args;
 }
@@ -65,10 +69,41 @@ function buildReleaseBlock(version, date, notes) {
   updated = `${changelogTitle}\n\n${releaseBlock}${afterTitle}`;
 
   if (args.write) {
-    writeFileSync(changelogPath, updated, "utf8");
-    console.log(
-      `Wrote updated ${basename(changelogPath)} with new entry for ${version}.`
-    );
+    const oldContent = readFileSync(changelogPath, 'utf8');
+    if (oldContent === updated) {
+      console.log('No changes to CHANGELOG.md');
+    } else {
+      writeFileSync(changelogPath, updated, "utf8");
+      console.log(
+        `Wrote updated ${basename(changelogPath)} with new entry for ${version}.`
+      );
+      if (args.commit) {
+        try {
+          execSync(`git add ${changelogPath}`);
+          execSync(`git commit -m "docs(changelog): ${version} [skip ci]" --no-verify`);
+          console.log('Committed CHANGELOG.md');
+        } catch (e) {
+          console.warn('git commit failed:', e.message);
+        }
+      }
+      if (args.tag) {
+        try {
+          execSync(`git tag v${version}`);
+          console.log(`Tagged v${version}`);
+        } catch (e) {
+          console.warn('git tag failed:', e.message);
+        }
+      }
+      if (args.push) {
+        try {
+          execSync('git push');
+          if (args.tag) execSync('git push --tags');
+          console.log('Pushed changes');
+        } catch (e) {
+          console.warn('git push failed:', e.message);
+        }
+      }
+    }
   } else {
     console.log("==== PREVIEW: Top of CHANGELOG.md after injection ====");
     console.log(updated.split(/\r?\n/).slice(0, 60).join("\n"));

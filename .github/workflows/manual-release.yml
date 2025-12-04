@@ -58,7 +58,9 @@ jobs:
         if: steps.compute.outputs.version != 'none'
         run: |
           DATE=$(date +%Y-%m-%d)
-          node scripts/update-changelog.js --version ${{ steps.compute.outputs.version }} --date $DATE --notes "${{ steps.notes.outputs.notes }}" --write
+          node scripts/update-changelog.js --version ${{ steps.compute.outputs.version }} --date $DATE --notes "${{ steps.notes.outputs.notes }}" --write --commit
+          # Verify header is at the top
+          node scripts/verify-changelog.js
           git add CHANGELOG.md
           git commit -m "docs(changelog): ${{ steps.compute.outputs.version }} [skip ci]" || echo "No changelog changes"
           git tag v${{ steps.compute.outputs.version }} || echo "Tag exists"
