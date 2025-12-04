@@ -20,14 +20,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (using bun)
+        run: bun install --frozen-lockfile
 
       - name: Compute next version using semantic-release
         id: compute
         run: |
           # Run semantic-release in dry-run to determine the next version without publishing
-          SKIP_CHANGELOG=true npx semantic-release --no-ci --dry-run --branches master || true
+          SKIP_CHANGELOG=true bunx semantic-release --no-ci --dry-run --branches master || true
           # Fallback: compute-next-version if semantic-release doesn't produce a version
           VERSION=$(node scripts/compute-next-version.js || echo none)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -40,7 +40,7 @@ jobs:
         if: steps.compute.outputs.version != 'none'
         id: notes
         run: |
-          NOTES=$(npx conventional-changelog -p conventionalcommits -r 0 -u || true)
+          NOTES=$(bunx conventional-changelog -p conventionalcommits -r 0 -u || true)
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT

@@ -18,12 +18,22 @@ function parseArgs(argv) {
 
 function ensureChangelogTitle(content, title) {
   let normalized = content.replace(/^#\s*Changelog.*$/gim, "");
-  normalized = normalized.replace(/All notable changes to .* will be documented in this file\./gim, "");
+  normalized = normalized.replace(
+    /All notable changes to .* will be documented in this file\./gim,
+    ""
+  );
   return title + "\n" + normalized.trimStart();
 }
 
 function buildReleaseBlock(version, date, notes) {
-  const lines = notes
+  const trimmed = notes.trim();
+  // If it's already formatted with headings (conventional-changelog style), insert as-is
+  if (/^#{1,3}\s+/m.test(trimmed)) {
+    // Remove top-level '## [Unreleased]' if present
+    const cleaned = trimmed.replace(/^##\s*\[?Unreleased\]?[^\n]*\n+/i, "");
+    return `## [${version}] - ${date}\n\n${cleaned.trim()}\n\n`;
+  }
+  const lines = trimmed
     .split(/\r?\n/)
     .map((l) => (l.startsWith("- ") || l.startsWith("* ") ? l : `- ${l}`));
   return `## [${version}] - ${date}\n\n${lines.join("\n")}\n\n`;
