@@ -1,0 +1,62 @@
+name: Manual Release (Changelog + Version)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  manual-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compute next version
+        id: compute
+        run: |
+          VERSION=$(node scripts/compute-next-version.js || echo none)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if release needed
+        if: steps.compute.outputs.version == 'none'
+        run: echo "No version bump detected. Exiting."
+
+      - name: Generate notes (Conventional Changelog)
+        if: steps.compute.outputs.version != 'none'
+        id: notes
+        run: |
+          NOTES=$(npx conventional-changelog -p conventionalcommits -r 0 -u || true)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Bump package.json version
+        if: steps.compute.outputs.version != 'none'
+        run: |
+          node scripts/bump-package-version.js --version ${{ steps.compute.outputs.version }}
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add package.json
+          git commit -m "chore(release): bump version to ${{ steps.compute.outputs.version }} [skip ci]" || echo "No changes to commit"
+
+      - name: Inject changelog entry
+        if: steps.compute.outputs.version != 'none'
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          node scripts/update-changelog.js --version ${{ steps.compute.outputs.version }} --date $DATE --notes "${{ steps.notes.outputs.notes }}" --write
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): ${{ steps.compute.outputs.version }} [skip ci]" || echo "No changelog changes"
+          git tag v${{ steps.compute.outputs.version }} || echo "Tag exists"
+          git push origin HEAD:main --follow-tags
